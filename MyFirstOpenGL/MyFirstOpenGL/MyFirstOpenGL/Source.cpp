@@ -1,6 +1,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <vector>
 
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
@@ -11,8 +15,95 @@ void Resize_Window(GLFWwindow* window, int iFrameBufferWidth, int iFrameBufferHe
 	glViewport(0, 0, iFrameBufferWidth, iFrameBufferHeight);
 }
 
+// función que devuelve string con todo el archivo leído
+std::string Load_File(const std::string& filePath) {
+	std::ifstream file(filePath);
+
+	std::string fileContent;
+	std::string line;
+
+	int wordCount = 0;
+
+
+	// try catch típico
+	if (!file.is_open()) {
+		std::cerr << "No se ha podido abrir el archivo" << filePath << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
+
+
+	while (std::getline(file, line)) {
+
+		std::stringstream ss(line);
+		std::string word;
+
+		while (ss >> word) {
+			wordCount++;
+		}
+	}
+
+	file.close();
+
+	std::cout << "Numero de palabras: " << wordCount << std::endl;
+	return "";
+
+
+	/*
+
+	//
+	while (std::getline(file, line)) {
+		fileContent += line + "\n";
+	}
+
+	// cerramos stream datos y devolvemos la variable/contenido
+	file.close();
+	return fileContent;*/
+}
+
+GLuint LoadVertexShader(const std::string& filePath) {
+
+	// crear un vertex shader
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+
+	std::string sShaderCode = Load_File(filePath);
+	const char* cShaderSource = sShaderCode.c_str();
+
+	// vinculamos el vertex shader con su código fuente
+	glShaderSource(vertexShader, 1, &cShaderSource, nullptr);
+
+	// compilamos
+	glCompileShader(vertexShader);
+
+	// Verificar errores de compilación
+	GLint success;
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+	//Si la compilacion ha sido exitosa devolvemos el vertex shader
+	if (success) {
+
+		return vertexShader;
+	}
+	else {
+
+		//Obtenemos longitud del log
+		GLint logLength;
+		glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &logLength);
+
+		//Obtenemos el log
+		std::vector<GLchar> errorLog(logLength);
+		glGetShaderInfoLog(vertexShader, logLength, nullptr, errorLog.data());
+
+		//Mostramos el log y finalizamos programa
+		std::cerr << "Se ha producido un error al cargar el vertex shader: "
+			<< errorLog.data() << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
+}
+
 void main()
 {
+	std::cout << Load_File("DELETEME.txt") << std::endl;
+
 	int iFrameBufferWidth = 0;
 	int iFrameBufferHeight = 0;
 
@@ -61,7 +152,7 @@ void main()
 		glGenBuffers(1, &vboPuntos);
 
 		//Indico que el VBO activo es el que acabo de crear y que almacenará un array. Todos los VBO que genere se asignaran al último VAO que he hecho glBindVertexArray
-		glBindBuffer(GL_ARRAY_BUFFER, vboPuntos);		
+		glBindBuffer(GL_ARRAY_BUFFER, vboPuntos);
 
 		//Posición X e Y del punto
 		GLfloat punto[] = {
@@ -113,14 +204,13 @@ void main()
 			glfwSwapBuffers(window);
 		}
 
-	}else {
+	}
+	else {
 		std::cout << "Ha petao." << std::endl;
 		glfwTerminate();
 	}
 	//Finalizamos GLFW
 	glfwTerminate();
 }
-
-
 
 
