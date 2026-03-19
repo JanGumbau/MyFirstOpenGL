@@ -1,6 +1,8 @@
 #include<GL/glew.h>
 #include<GLFW/glfw3.h>
 #include<iostream>
+#include<string>
+#include<fstream>
 #define WINDIW_WIDTH 1280
 #define WINDIW_HEIGHT 720
 
@@ -10,9 +12,32 @@ void ResizeWindow(GLFWwindow* window, int iNewFrameBufferWidth, int iNewFrameBuf
 
 }
 
+//funcio que retorna string per retornar shader a GPU
+std::string Load_File(const std::string& filePath) {
+	std::ifstream file(filePath);
+
+	std::string fileContent;
+	std::string line;
+
+	//control error
+
+	if (!file.is_open()) {
+		std::cerr << "67" << filePath << std::endl;
+		std::exit(EXIT_FAILURE);
+
+	}
+	while (std::getline(file, line)) {
+		fileContent += line + "\n";
+	}
+	//tanquem stream de dades
+	file.close();
+	return fileContent;
+}
 
 void main() {
 
+
+	std::cout << "Contingut fitxer" << Load_File("DELETEME.txt") << std::endl;
 	// Initialize GLFW per gestionar ventanas e inputs
 	glfwInit();
 
@@ -31,6 +56,11 @@ void main() {
 	glfwMakeContextCurrent(window); //definir finestra en la que es treballarà
 
 	glewExperimental = GL_TRUE; //activo funcions experimentals per totes les gràfiques
+
+	glEnable(GL_CULL_FACE);
+
+	//indiquem costat del culling
+	glCullFace(GL_BACK);
 	if (glewInit() == GLEW_OK) { //inicialitzar GLEW
 		glClearColor(1.f, 0.f, 0.f, 1.f); //definir color base (vermell)
 
@@ -43,7 +73,21 @@ void main() {
 
 		glBindBuffer(GL_ARRAY_BUFFER, vboPoints); //activar el vertex buffer object
 
-		GLfloat points[] = { 0.f, 0.f}; //coordenades del punt a dibuixar
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		GLfloat points[] = { -0.5f, 0.5f,
+							 -0.5f, 0.f,
+							 0.f,0.f,
+
+			//clock-wise 3-2-4
+
+							-0.5f, 0.5f,
+							0.f,0.f,
+							 0.f,0.5f,
+						
+
+		
+							
+							 }; //coordenades del punt a dibuixar
 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW); //enviar les dades al buffer
 
@@ -70,7 +114,7 @@ void main() {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); //neteja el buffer de color
 
 			glBindVertexArray(vaoPoints); //activar el vertex array object
-			glDrawArrays(GL_POINTS, 0, 1); //dibujar un punto a partir del vertex array object activado, empezando en el vertex 0 y dibujando 1 vertex
+			glDrawArrays(GL_TRIANGLES, 0, 10);
 
 			glBindVertexArray(vaoPoints); //desactivar el vertex array object
 
