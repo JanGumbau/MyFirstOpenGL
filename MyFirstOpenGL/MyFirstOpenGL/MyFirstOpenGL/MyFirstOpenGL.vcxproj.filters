@@ -32,8 +32,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="DELETEME.txt">
-      <Filter>Shader</Filter>
-    </Text>
+    <None Include="MyFirstVertexShader.glsl">
+      <Filter>Shader\Vertex Shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

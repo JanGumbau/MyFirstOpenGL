@@ -1,138 +1,255 @@
-#include<GL/glew.h>
-#include<GLFW/glfw3.h>
-#include<iostream>
-#include<string>
-#include<fstream>
-#define WINDIW_WIDTH 1280
-#define WINDIW_HEIGHT 720
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <vector>
 
-void ResizeWindow(GLFWwindow* window, int iNewFrameBufferWidth, int iNewFrameBufferHeight) {
+#define WINDOW_WIDTH 640
+#define WINDOW_HEIGHT 480
 
-	glViewport(0, 0, iNewFrameBufferWidth, iNewFrameBufferHeight);
+struct ShaderProgram {
+	GLuint vertexShader = 0;
+};
 
+void Resize_Window(GLFWwindow* window, int iFrameBufferWidth, int iFrameBufferHeight) {
+
+	//definir finestra
+	glViewport(0, 0, iFrameBufferWidth, iFrameBufferHeight);
 }
 
-//funcio que retorna string per retornar shader a GPU
+//Funcion que devuelve una string para devolver el shader a cargar en GPU
 std::string Load_File(const std::string& filePath) {
+
 	std::ifstream file(filePath);
 
 	std::string fileContent;
 	std::string line;
 
-	//control error
-
+	//Control errores
 	if (!file.is_open()) {
-		std::cerr << "67" << filePath << std::endl;
+		std::cerr << "No se ha podido abrir el archivo, pta vida tt" << filePath << std::endl;
 		std::exit(EXIT_FAILURE);
-
 	}
+
+	//Leemos contenido del shader y lo almacenamos
 	while (std::getline(file, line)) {
 		fileContent += line + "\n";
 	}
-	//tanquem stream de dades
+
+	//Cerramos stream de datos y return contenido
 	file.close();
 	return fileContent;
+
+}
+
+GLuint LoadVertexShader(const std::string& filePath) {
+
+	//Crear vertex shader a la GPU
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+
+	//Leo el archivo con el shader y lo almaceno
+	std::string sShaderCode = Load_File(filePath);
+	const char* cShaderSource = sShaderCode.c_str();
+
+	//Vinculo el vertex shader a la GPU
+	glShaderSource(vertexShader, 1, &cShaderSource, nullptr);
+
+	//Compilar vertex shader
+	glCompileShader(vertexShader);
+
+	//Verificación de la compilación del shader
+	GLint success;
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+	if (success) {
+		return vertexShader;
+	}
+	else {
+
+		//Obtener longitud del log
+		GLint logLenght;
+		glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &logLenght);
+
+		//Obtenemos el log
+		std::vector<GLchar> errorLog(logLenght);
+		glGetShaderInfoLog(vertexShader, logLenght, nullptr, errorLog.data());
+
+		//Mostramos el log
+		std::cerr << "Se ha producido el siguiente error: " << errorLog.data() << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
+}
+
+//Usando el struct que encapsula los shaders creare el programa en la GPU que los usara
+GLuint CreateProgram(const ShaderProgram& shaders) {
+
+	//Creamos programa
+	GLuint program = glCreateProgram();
+
+	//Verificar si existe un vertexShader a cargar
+	if (shaders.vertexShader != 0) {
+
+		glAttachShader(program, shaders.vertexShader);
+	}
+
+	//Linkear el programa
+	glLinkProgram(program);
+
+	//Obtener estado del programa
+	GLint success;
+	glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+	if (success) {
+
+		//Liberar recursos
+		if (shaders.vertexShader != 0) {
+
+			glDetachShader(program, shaders.vertexShader);
+		}
+
+		return program;
+	}
+	else {
+
+		//Obtenemos longitud del log
+		GLint logLenght;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLenght);
+
+		//Almacenamos log
+		std::vector <GLchar> errorLog(logLenght);
+		glGetProgramInfoLog(program, logLenght, nullptr, errorLog.data());
+
+		//Printeamos log
+		std::cerr << "Error al linkar el programa: " << errorLog.data() << std::endl;
+		std::exit(EXIT_FAILURE);
+
+	}
 }
 
 void main() {
 
-
-	std::cout << "Contingut fitxer" << Load_File("DELETEME.txt") << std::endl;
-	// Initialize GLFW per gestionar ventanas e inputs
+	//Inicializamos GLFW para gestionar ventanas e inputs
 	glfwInit();
 
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //agafa la versió més nova d'OpenGL segons els drivers de la targeta gràfica
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); //versió major d'OpenGL
+	//Configuramos la ventana
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
-	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE); //no es pot redimensionar la finestra
+	//Inicializamos la ventana
+	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "My Engine", NULL, NULL);
 
-	GLFWwindow* window = glfwCreateWindow(WINDIW_WIDTH, WINDIW_HEIGHT, "My First OpenGL", NULL, NULL); 
-	//crea la finestra null serveix per a pantalles múltiples o compartir contextos entre finestres
+	//Asignamos función de callback para cuando el frame buffer es modificado
+	glfwSetFramebufferSizeCallback(window, Resize_Window);
 
-	glfwSetFramebufferSizeCallback(window, ResizeWindow); //funció que es crida quan es redimensiona la finestra
+	//Definimos espacio de trabajo
+	glfwMakeContextCurrent(window);
 
+	//Permitimos a GLEW usar funcionalidades experimentales
+	glewExperimental = GL_TRUE;
 
-	glfwMakeContextCurrent(window); //definir finestra en la que es treballarà
-
-	glewExperimental = GL_TRUE; //activo funcions experimentals per totes les gràfiques
-
+	//Activamos cull face
 	glEnable(GL_CULL_FACE);
 
-	//indiquem costat del culling
+	//Indicamos lado del culling
 	glCullFace(GL_BACK);
-	if (glewInit() == GLEW_OK) { //inicialitzar GLEW
-		glClearColor(1.f, 0.f, 0.f, 1.f); //definir color base (vermell)
 
-		GLuint vaoPoints, vboPoints; //identificadors del vertex array object i vertex buffer object
+	//Inicializamos GLEW y controlamos errores
+	if (glewInit() == GLEW_OK) {
 
-		glGenVertexArrays(1, &vaoPoints); //generar un vertex array object
-		glBindVertexArray(vaoPoints); //activar el vertex array object
+		//Compilar shaders
+		ShaderProgram myFirstProgram;
+		myFirstProgram.vertexShader = LoadVertexShader("MyFirstVertexShader.glsl");
 
-		glGenBuffers(1, &vboPoints); //generar un vertex buffer object
+		//Compilar el programa
+		GLuint myfirstCompiledProgram;
+		myfirstCompiledProgram = CreateProgram(myFirstProgram);
 
-		glBindBuffer(GL_ARRAY_BUFFER, vboPoints); //activar el vertex buffer object
+		//Definimos color para limpiar el buffer de color
+		glClearColor(1.f, 0.f, 0.f, 1.f);
+
+		GLuint vaoPuntos, vboPuntos;
+
+		//Definimos cantidad de vao a crear y donde almacenarlos 
+		glGenVertexArrays(1, &vaoPuntos);
+
+		//Indico que el VAO activo de la GPU es el que acabo de crear
+		glBindVertexArray(vaoPuntos);
+
+		//Definimos cantidad de vbo a crear y donde almacenarlos
+		glGenBuffers(1, &vboPuntos);
+
+		//Indico que el VBO activo es el que acabo de crear y que almacenará un array. Todos los VBO que genere se asignaran al último VAO que he hecho glBindVertexArray
+		glBindBuffer(GL_ARRAY_BUFFER, vboPuntos);
+
+		//Posición X e Y del punto
+		GLfloat punto[] = {
+			-0.5f,  0.5f, // Vértice superior izquierdo
+			-0.5f, -0.5f, // Vértice superior derecho
+			 0.0f,  0.5f, // Vértice inferior derecho
+			 0.0f, -0.5f, // Vértice inferior derecho
+			 0.5f,  0.5f, // Vértice inferior izquierdo
+			 0.5f, -0.5f  // Vértice superior izquierdo
+		};
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		GLfloat points[] = { -0.5f, 0.5f,
-							 -0.5f, 0.f,
-							 0.f,0.f,
 
-			//clock-wise 3-2-4
+		//Ponemos los valores en el VBO creado
+		glBufferData(GL_ARRAY_BUFFER, sizeof(punto), punto, GL_STATIC_DRAW);
 
-							-0.5f, 0.5f,
-							0.f,0.f,
-							 0.f,0.5f,
-						
+		//Indicamos donde almacenar y como esta distribuida la información
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
 
-		
-							
-							 }; //coordenades del punt a dibuixar
-
-		glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW); //enviar les dades al buffer
-
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0); //definir com s'han d'interpretar les dades del buffer
-		//activo el atribut 0, que és el que utilitzaré al shader per a les coordenades del punt, cada vertex té 2 components (x i y), son floats, no estan normalitzats, cada vertex ocupa 2*sizeof(GLfloat) bytes, y empiezan en el byte 0 del buffer
+		//Indicamos que la tarjeta gráfica puede usar el atributo 0
 		glEnableVertexAttribArray(0);
 
-		//desvinculo vbo
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		//desvinculo VAO
+		//Desvinculamos VAO
 		glBindVertexArray(0);
 
+		//Desvinculamos VBO
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+		//Indicar a la GPU que use el programa
+		glUseProgram(myfirstCompiledProgram);
 
+		//Generamos el game loop
+		while (!glfwWindowShouldClose(window)) {
 
+			//Pulleamos los eventos (botones, teclas, mouse...)
+			glfwPollEvents();
 
+			//Limpiamos los buffers
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	
-		while(!glfwWindowShouldClose(window)) { //mentre la finestra no s'hagi tancat
+			//Definimos que queremos usar el VAO con los puntos
+			glBindVertexArray(vaoPuntos);
 
-			glfwPollEvents(); //pullejem events
+			//Definimos que queremos dibujar
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
 
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); //neteja el buffer de color
+			//Dejamos de usar el VAO indicado anteriormente
+			glBindVertexArray(0);
 
-			glBindVertexArray(vaoPoints); //activar el vertex array object
-			glDrawArrays(GL_TRIANGLES, 0, 10);
-
-			glBindVertexArray(vaoPoints); //desactivar el vertex array object
-
-
-			glFlush(); //fins que la tarjeta gráfica hagi acabat de dibuixar, no segueix amb el següent codi
-			glfwSwapBuffers(window); //intercanvia el buffer de dibuix amb el buffer de visualització
-			
-
+			//Cambiamos buffers
+			glFlush();
+			glfwSwapBuffers(window);
 		}
-		
+
+		//Desativar y liberar programa
+		glUseProgram(0);
+		glDeleteProgram(myfirstCompiledProgram);
+
 	}
 	else {
-
-		std::cout << "peta" << std::endl;
-		glfwTerminate(); //tancar GLFW
+		std::cout << "Ha petao." << std::endl;
+		glfwTerminate();
 	}
-
+	//Finalizamos GLFW
 	glfwTerminate();
 }
+
+
 
 
