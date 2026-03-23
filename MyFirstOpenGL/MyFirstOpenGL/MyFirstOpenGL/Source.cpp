@@ -1,9 +1,11 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <glm.hpp>
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <vector>
+
 
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
@@ -170,6 +172,7 @@ void main() {
 		GLuint myfirstCompiledProgram;
 		myfirstCompiledProgram = CreateProgram(myFirstProgram);
 
+		GLint offsetReference = glGetUniformLocation(myfirstCompiledProgram, "offset");
 		//Definimos color para limpiar el buffer de color
 		glClearColor(1.f, 0.f, 0.f, 1.f);
 
@@ -241,15 +244,42 @@ void main() {
 		//Indicar a la GPU que use el programa
 		glUseProgram(myfirstCompiledProgram);
 
+		glm::vec2 direction = glm::vec2(0.4f, 0.5f);
+		float speed = 0.1f;
+		//modificar variable
+		glUniform2fv(offsetReference, 1, &direction[0]);
+		
+
+
 		//Generamos el game loop
 		while (!glfwWindowShouldClose(window)) {
 
 			//Pulleamos los eventos (botones, teclas, mouse...)
 			glfwPollEvents();
 
+			//verificar inputs
+			if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+				direction.y += speed;
+				
+			}
+			else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+				direction.y -= speed;
+				
+			}
+			else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+				direction.x -= speed;
+			}
+			
+			else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+				direction.x += speed;
+				
+			}
+			glUniform2fv(offsetReference, 1, &direction[0]);
 			//Limpiamos los buffers
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+
+			
 			//Definimos que queremos usar el VAO con los puntos
 			glBindVertexArray(vaoPuntos);
 
