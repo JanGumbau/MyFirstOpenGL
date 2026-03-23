@@ -14,7 +14,7 @@ struct ShaderProgram {
 
 void Resize_Window(GLFWwindow* window, int iFrameBufferWidth, int iFrameBufferHeight) {
 
-	//definir finestra
+	//Definir nuevo tamaño del viewport
 	glViewport(0, 0, iFrameBufferWidth, iFrameBufferHeight);
 }
 
@@ -129,6 +129,9 @@ GLuint CreateProgram(const ShaderProgram& shaders) {
 
 void main() {
 
+	//Definir semilla random
+	srand(static_cast <unsigned int>(time(NULL)));
+
 	//Inicializamos GLFW para gestionar ventanas e inputs
 	glfwInit();
 
@@ -170,7 +173,7 @@ void main() {
 		//Definimos color para limpiar el buffer de color
 		glClearColor(1.f, 0.f, 0.f, 1.f);
 
-		GLuint vaoPuntos, vboPuntos;
+		GLuint vaoPuntos, vboPuntos, vboAleatorios;
 
 		//Definimos cantidad de vao a crear y donde almacenarlos 
 		glGenVertexArrays(1, &vaoPuntos);
@@ -180,6 +183,7 @@ void main() {
 
 		//Definimos cantidad de vbo a crear y donde almacenarlos
 		glGenBuffers(1, &vboPuntos);
+		glGenBuffers(1, &vboAleatorios);
 
 		//Indico que el VBO activo es el que acabo de crear y que almacenará un array. Todos los VBO que genere se asignaran al último VAO que he hecho glBindVertexArray
 		glBindBuffer(GL_ARRAY_BUFFER, vboPuntos);
@@ -205,11 +209,34 @@ void main() {
 		//Indicamos que la tarjeta gráfica puede usar el atributo 0
 		glEnableVertexAttribArray(0);
 
-		//Desvinculamos VAO
-		glBindVertexArray(0);
+		//Desvinculamos VBO
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		//Crear offset aleatorio
+		GLfloat randomOffset[12];
+
+		//Creamos aleatorios
+		for (int i = 0; i < 12; i++) {
+			randomOffset[i] = static_cast <GLfloat>(rand()) / RAND_MAX * 0.5f;
+		}
+
+		//Indico vbo activo a configurar
+		glBindBuffer(GL_ARRAY_BUFFER, vboAleatorios);
+
+		//Ponemos los valores en el VBO creado
+		glBufferData(GL_ARRAY_BUFFER, sizeof(randomOffset), randomOffset, GL_STATIC_DRAW);
+
+		//Indicamos donde almacenar y como esta distribuida la información
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+
+		//Indicamos que la tarjeta gráfica puede usar el atributo 1
+		glEnableVertexAttribArray(1);
 
 		//Desvinculamos VBO
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		//Desvinculamos VAO
+		glBindVertexArray(0);
 
 		//Indicar a la GPU que use el programa
 		glUseProgram(myfirstCompiledProgram);
