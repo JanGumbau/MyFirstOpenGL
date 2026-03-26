@@ -38,5 +38,8 @@
     <None Include="MyFirstGeometryShader.glsl">
       <Filter>Shader\Geometry Shader</Filter>
     </None>
+    <None Include="MyFirstFragmentShader.glsl">
+      <Filter>Shader\Fragment Shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

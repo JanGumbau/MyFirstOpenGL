@@ -22,6 +22,7 @@
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="MyFirstFragmentShader.glsl" />
     <None Include="MyFirstGeometryShader.glsl" />
     <None Include="MyFirstVertexShader.glsl" />
   </ItemGroup>

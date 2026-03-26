@@ -13,6 +13,7 @@
 struct ShaderProgram {
 	GLuint vertexShader = 0;
 	GLuint geometryShader = 0;
+	GLuint fragmentShader = 0;
 };
 
 void Resize_Window(GLFWwindow* window, int iFrameBufferWidth, int iFrameBufferHeight) {
@@ -44,6 +45,43 @@ std::string Load_File(const std::string& filePath) {
 	file.close();
 	return fileContent;
 
+}
+GLuint LoadFragmentShader(const std::string& filePath) {
+
+	//Crear vertex shader a la GPU
+	GLuint fragmentShader = glCreateShader(GL_VERTEX_SHADER);
+
+	//Leo el archivo con el shader y lo almaceno
+	std::string sShaderCode = Load_File(filePath);
+	const char* cShaderSource = sShaderCode.c_str();
+
+	//Vinculo el vertex shader a la GPU
+	glShaderSource(fragmentShader, 1, &cShaderSource, nullptr);
+
+	//Compilar vertex shader
+	glCompileShader(fragmentShader);
+
+	//Verificación de la compilación del shader
+	GLint success;
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+
+	if (success) {
+		return fragmentShader;
+	}
+	else {
+
+		//Obtener longitud del log
+		GLint logLenght;
+		glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &logLenght);
+
+		//Obtenemos el log
+		std::vector<GLchar> errorLog(logLenght);
+		glGetShaderInfoLog(fragmentShader, logLenght, nullptr, errorLog.data());
+
+		//Mostramos el log
+		std::cerr << "Se ha producido el siguiente error: " << errorLog.data() << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
 }
 
 GLuint LoadVertexShader(const std::string& filePath) {
@@ -137,6 +175,10 @@ GLuint CreateProgram(const ShaderProgram& shaders) {
 
 		glAttachShader(program, shaders.geometryShader);
 	}
+	if (shaders.fragmentShader != 0) {
+
+		glAttachShader(program, shaders.fragmentShader);
+	}
 
 	//Linkear el programa
 	glLinkProgram(program);
@@ -155,6 +197,10 @@ GLuint CreateProgram(const ShaderProgram& shaders) {
 		if (shaders.geometryShader != 0) {
 
 			glDetachShader(program, shaders.geometryShader);
+		}
+		if (shaders.fragmentShader != 0) {
+
+			glDetachShader(program, shaders.fragmentShader);
 		}
 
 		return program;
@@ -215,6 +261,7 @@ void main() {
 		ShaderProgram myFirstProgram;
 		myFirstProgram.vertexShader = LoadVertexShader("MyFirstVertexShader.glsl");
 		myFirstProgram.geometryShader = LoadGeometryShader("MyFirstGeometryShader.glsl");
+		myFirstProgram.fragmentShader = LoadGeometryShader("MyFirstFragmentShader.glsl");
 
 		//Compilar el programa
 		GLuint myfirstCompiledProgram;
@@ -241,9 +288,11 @@ void main() {
 
 		//Posición X e Y del punto
 		GLfloat punto[] = {
-			-0.5f,  0.75f, // Vértice superior izquierdo
-			-0.5f,  0.5f,
-			0.0f, 0.25f
+				 -0.5f, -0.5f,
+				0.5f, -0.5f,
+			    0.0f,  0.5f,   
+		  
+		 
 
 		};
 
@@ -330,7 +379,7 @@ void main() {
 			glBindVertexArray(vaoPuntos);
 
 			//Definimos que queremos dibujar
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 			//Dejamos de usar el VAO indicado anteriormente
 			glBindVertexArray(0);
