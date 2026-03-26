@@ -7,11 +7,12 @@
 #include <vector>
 
 
-#define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 480
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 960
 
 struct ShaderProgram {
 	GLuint vertexShader = 0;
+	GLuint geometryShader = 0;
 };
 
 void Resize_Window(GLFWwindow* window, int iFrameBufferWidth, int iFrameBufferHeight) {
@@ -82,6 +83,43 @@ GLuint LoadVertexShader(const std::string& filePath) {
 		std::exit(EXIT_FAILURE);
 	}
 }
+GLuint LoadGeometryShader(const std::string& filePath) {
+
+	//Crear vertex shader a la GPU
+	GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+
+	//Leo el archivo con el shader y lo almaceno
+	std::string sShaderCode = Load_File(filePath);
+	const char* cShaderSource = sShaderCode.c_str();
+
+	//Vinculo el vertex shader a la GPU
+	glShaderSource(geometryShader, 1, &cShaderSource, nullptr);
+
+	//Compilar vertex shader
+	glCompileShader(geometryShader);
+
+	//Verificación de la compilación del shader
+	GLint success;
+	glGetShaderiv(geometryShader, GL_COMPILE_STATUS, &success);
+
+	if (success) {
+		return geometryShader;
+	}
+	else {
+
+		//Obtener longitud del log
+		GLint logLenght;
+		glGetShaderiv(geometryShader, GL_INFO_LOG_LENGTH, &logLenght);
+
+		//Obtenemos el log
+		std::vector<GLchar> errorLog(logLenght);
+		glGetShaderInfoLog(geometryShader, logLenght, nullptr, errorLog.data());
+
+		//Mostramos el log
+		std::cerr << "Se ha producido el siguiente error: " << errorLog.data() << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
+}
 
 //Usando el struct que encapsula los shaders creare el programa en la GPU que los usara
 GLuint CreateProgram(const ShaderProgram& shaders) {
@@ -93,6 +131,11 @@ GLuint CreateProgram(const ShaderProgram& shaders) {
 	if (shaders.vertexShader != 0) {
 
 		glAttachShader(program, shaders.vertexShader);
+	}
+	//verificar si hi ha geometry shader
+	if (shaders.geometryShader != 0) {
+
+		glAttachShader(program, shaders.geometryShader);
 	}
 
 	//Linkear el programa
@@ -108,6 +151,10 @@ GLuint CreateProgram(const ShaderProgram& shaders) {
 		if (shaders.vertexShader != 0) {
 
 			glDetachShader(program, shaders.vertexShader);
+		}
+		if (shaders.geometryShader != 0) {
+
+			glDetachShader(program, shaders.geometryShader);
 		}
 
 		return program;
@@ -167,6 +214,7 @@ void main() {
 		//Compilar shaders
 		ShaderProgram myFirstProgram;
 		myFirstProgram.vertexShader = LoadVertexShader("MyFirstVertexShader.glsl");
+		myFirstProgram.geometryShader = LoadGeometryShader("MyFirstGeometryShader.glsl");
 
 		//Compilar el programa
 		GLuint myfirstCompiledProgram;
@@ -193,12 +241,10 @@ void main() {
 
 		//Posición X e Y del punto
 		GLfloat punto[] = {
-			-0.5f,  0.5f, // Vértice superior izquierdo
-			-0.5f, -0.5f, // Vértice superior derecho
-			 0.0f,  0.5f, // Vértice inferior derecho
-			 0.0f, -0.5f, // Vértice inferior derecho
-			 0.5f,  0.5f, // Vértice inferior izquierdo
-			 0.5f, -0.5f  // Vértice superior izquierdo
+			-0.5f,  0.75f, // Vértice superior izquierdo
+			-0.5f,  0.5f,
+			0.0f, 0.25f
+
 		};
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
