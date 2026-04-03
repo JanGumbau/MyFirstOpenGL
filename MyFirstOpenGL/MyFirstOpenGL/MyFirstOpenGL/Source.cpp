@@ -46,43 +46,6 @@ std::string Load_File(const std::string& filePath) {
 	return fileContent;
 
 }
-GLuint LoadFragmentShader(const std::string& filePath) {
-
-	//Crear vertex shader a la GPU
-	GLuint fragmentShader = glCreateShader(GL_VERTEX_SHADER);
-
-	//Leo el archivo con el shader y lo almaceno
-	std::string sShaderCode = Load_File(filePath);
-	const char* cShaderSource = sShaderCode.c_str();
-
-	//Vinculo el vertex shader a la GPU
-	glShaderSource(fragmentShader, 1, &cShaderSource, nullptr);
-
-	//Compilar vertex shader
-	glCompileShader(fragmentShader);
-
-	//Verificación de la compilación del shader
-	GLint success;
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-	if (success) {
-		return fragmentShader;
-	}
-	else {
-
-		//Obtener longitud del log
-		GLint logLenght;
-		glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &logLenght);
-
-		//Obtenemos el log
-		std::vector<GLchar> errorLog(logLenght);
-		glGetShaderInfoLog(fragmentShader, logLenght, nullptr, errorLog.data());
-
-		//Mostramos el log
-		std::cerr << "Se ha producido el siguiente error: " << errorLog.data() << std::endl;
-		std::exit(EXIT_FAILURE);
-	}
-}
 
 GLuint LoadVertexShader(const std::string& filePath) {
 
@@ -158,6 +121,42 @@ GLuint LoadGeometryShader(const std::string& filePath) {
 		std::exit(EXIT_FAILURE);
 	}
 }
+GLuint LoadFragmentShader(const std::string& filePath) {
+
+	// Crear fragment shader en la GPU (Corrected to GL_FRAGMENT_SHADER)
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+	// Leo el archivo con el shader y lo almaceno
+	std::string sShaderCode = Load_File(filePath);
+	const char* cShaderSource = sShaderCode.c_str();
+
+	// Vinculo el fragment shader a la GPU
+	glShaderSource(fragmentShader, 1, &cShaderSource, nullptr);
+
+	// Compilar fragment shader
+	glCompileShader(fragmentShader);
+
+	// Verificación de la compilación del shader
+	GLint success;
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+
+	if (success) {
+		return fragmentShader;
+	}
+	else {
+		// Obtener longitud del log
+		GLint logLenght;
+		glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &logLenght);
+
+		// Obtenemos el log
+		std::vector<GLchar> errorLog(logLenght);
+		glGetShaderInfoLog(fragmentShader, logLenght, nullptr, errorLog.data());
+
+		// Mostramos el log
+		std::cerr << "Se ha producido el siguiente error: " << errorLog.data() << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
+}
 
 //Usando el struct que encapsula los shaders creare el programa en la GPU que los usara
 GLuint CreateProgram(const ShaderProgram& shaders) {
@@ -222,7 +221,7 @@ GLuint CreateProgram(const ShaderProgram& shaders) {
 	}
 }
 
-void main() {
+int main() {
 
 	//Definir semilla random
 	srand(static_cast <unsigned int>(time(NULL)));
@@ -261,7 +260,7 @@ void main() {
 		ShaderProgram myFirstProgram;
 		myFirstProgram.vertexShader = LoadVertexShader("MyFirstVertexShader.glsl");
 		myFirstProgram.geometryShader = LoadGeometryShader("MyFirstGeometryShader.glsl");
-		myFirstProgram.fragmentShader = LoadGeometryShader("MyFirstFragmentShader.glsl");
+		myFirstProgram.fragmentShader = LoadFragmentShader("MyFirstFragmentShader.glsl");
 
 		//Compilar el programa
 		GLuint myfirstCompiledProgram;
@@ -269,7 +268,7 @@ void main() {
 
 		GLint offsetReference = glGetUniformLocation(myfirstCompiledProgram, "offset");
 		//Definimos color para limpiar el buffer de color
-		glClearColor(1.f, 0.f, 0.f, 1.f);
+		glClearColor(0.f, 0.f, 0.f, 1.f);
 
 		GLuint vaoPuntos, vboPuntos, vboAleatorios;
 
@@ -288,15 +287,15 @@ void main() {
 
 		//Posición X e Y del punto
 		GLfloat punto[] = {
-				 -0.5f, -0.5f,
-				0.5f, -0.5f,
-			    0.0f,  0.5f,   
+				 -0.5f, -0.25f,
+				0.5f, -0.25f,
+			    0.0f,  0.6f,   
 		  
 		 
 
 		};
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glPolygonMode(GL_FRONT, GL_FILL);
 
 		//Ponemos los valores en el VBO creado
 		glBufferData(GL_ARRAY_BUFFER, sizeof(punto), punto, GL_STATIC_DRAW);
