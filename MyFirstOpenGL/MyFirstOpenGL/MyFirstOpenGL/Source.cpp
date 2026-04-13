@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
 #include <iostream>
+#include <gtc/type_ptr.hpp>
+#include <gtc/matrix_transform.hpp>
 #include <string>
 #include <fstream>
 #include <vector>
@@ -17,7 +19,12 @@ struct ShaderProgram {
 	GLuint geometryShader = 0;
 	GLuint fragmentShader = 0;
 };
-
+struct GameObject {
+	glm::vec3 position = glm::vec3(0.f);
+	glm::vec3 rotation = glm::vec3(0.f);
+	glm::vec3 forward = glm::vec3(1.f, 0.f, 0.f);
+	float velocity = 0.01f;
+};
 void Resize_Window(GLFWwindow* window, int iFrameBufferWidth, int iFrameBufferHeight) {
 
 	//Definir nuevo tamaño del viewport
@@ -26,7 +33,16 @@ void Resize_Window(GLFWwindow* window, int iFrameBufferWidth, int iFrameBufferHe
 	glUniform2f(glGetUniformLocation(compiledPrograms[0], "windowSize"), iFrameBufferWidth, iFrameBufferHeight);
 
 }
+glm::mat4 GenerateRotationMatrix(glm::vec3 axis, float fDegrees)
+{
+	return glm::rotate(glm::mat4(1.0f), glm::radians(fDegrees), glm::normalize(axis));
+}
+//Funcion que genera una matriz de Translacion representada por un vector
+glm::mat4 GenerateTranslationMatrix(glm::vec3 translation)
+{
+	return glm::translate(glm::mat4(1.0f), translation);
 
+}
 //Funcion que devolvera una string con todo el archivo leido
 std::string Load_File(const std::string& filePath) {
 
@@ -57,7 +73,7 @@ GLuint LoadFragmentShader(const std::string& filePath) {
 	// Crear un fragment shader
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-	//Usamos la funcion creada para leer el fragment shader y almacenarlo 
+	//Usamos la funcion creada para leer el fragment shader y almacenarlo
 	std::string sShaderCode = Load_File(filePath);
 	const char* cShaderSource = sShaderCode.c_str();
 
@@ -99,7 +115,7 @@ GLuint LoadGeometryShader(const std::string& filePath) {
 	// Crear un vertex shader
 	GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
 
-	//Usamos la funcion creada para leer el vertex shader y almacenarlo 
+	//Usamos la funcion creada para leer el vertex shader y almacenarlo
 	std::string sShaderCode = Load_File(filePath);
 	const char* cShaderSource = sShaderCode.c_str();
 
@@ -140,7 +156,7 @@ GLuint LoadVertexShader(const std::string& filePath) {
 	// Crear un vertex shader
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
-	//Usamos la funcion creada para leer el vertex shader y almacenarlo 
+	//Usamos la funcion creada para leer el vertex shader y almacenarlo
 	std::string sShaderCode = Load_File(filePath);
 	const char* cShaderSource = sShaderCode.c_str();
 
@@ -274,7 +290,8 @@ void main() {
 
 		//Declarar vec2 para definir el offset
 		glm::vec2 offset = glm::vec2(0.f, 0.f);
-
+		//instancia gameObject
+		GameObject cubo;
 		//Compilar shaders
 		ShaderProgram myFirstProgram;
 		myFirstProgram.vertexShader = LoadVertexShader("MyFirstVertexShader.glsl");
@@ -289,7 +306,7 @@ void main() {
 
 		GLuint vaoPuntos, vboPuntos;
 
-		//Definimos cantidad de vao a crear y donde almacenarlos 
+		//Definimos cantidad de vao a crear y donde almacenarlos
 		glGenVertexArrays(1, &vaoPuntos);
 
 		//Indico que el VAO activo de la GPU es el que acabo de crear
@@ -303,9 +320,24 @@ void main() {
 
 		//Posición X e Y del punto
 		GLfloat punto[] = {
-			-0.5f, -0.25f, // Vértice superior izquierdo
-			 0.5f, -0.25f, // Vértice superior derecho
-			 0.0f,  0.6f, // Vértice inferior derecho
+			  -0.5f,0.5f,-0.5f,
+			  0.5f,0.5f,-0.5f,
+			  -0.5f,-0.5f,-0.5f,
+			  0.5f,-0.5f,-0.5f,
+			  0.5f,-0.5f,0.5f,
+			  0.5f,0.5f,-0.5f,
+			  0.5f,0.5f,0.5f,
+			  -0.5f,0.5f,-0.5f,
+			  -0.5f,0.5f,0.5f,
+			  -0.5f,-0.5f,-0.5f,
+			  -0.5f,-0.5f,0.5f,
+			  0.5f,-0.5f,0.5f,
+			  -0.5f,0.5f,0.5f,
+			  0.5f,0.5f,0.5f,
+
+
+
+
 		};
 
 		//Definimos modo de dibujo para cada cara
@@ -315,7 +347,7 @@ void main() {
 		glBufferData(GL_ARRAY_BUFFER, sizeof(punto), punto, GL_STATIC_DRAW);
 
 		//Indicamos donde almacenar y como esta distribuida la información
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 
 		//Indicamos que la tarjeta gráfica puede usar el atributo 0
 		glEnableVertexAttribArray(0);
@@ -326,12 +358,14 @@ void main() {
 		//Desvinculamos VAO
 		glBindVertexArray(0);
 
+		
+
 		//Indicar a la tarjeta GPU que programa debe usar
 		glUseProgram(compiledPrograms[0]);
+		glm::mat4 modelMatrix = glm::mat4(1.f);
 
 		//Asignar valores iniciales al programa
 		glUniform2f(glGetUniformLocation(compiledPrograms[0], "windowSize"), WINDOW_WIDTH, WINDOW_HEIGHT);
-
 		//Generamos el game loop
 		while (!glfwWindowShouldClose(window)) {
 
@@ -344,8 +378,22 @@ void main() {
 			//Definimos que queremos usar el VAO con los puntos
 			glBindVertexArray(vaoPuntos);
 
+			glm::mat4 cubeModelMatrix = glm::mat4(1.f);
+			//calculem nova pos del cub
+			cubo.position = cubo.position + cubo.forward * cubo.velocity;
+			//invertim direcció del cub
+			if (cubo.position.x >= 0.5f || cubo.position.x <= -0.5f) {
+				cubo.forward = cubo.forward * -10.f;
+			}
+			//genero translation matrix a partir de la posició del cub
+			glm::mat4 cubeTranslationMatrix = GenerateTranslationMatrix(cubo.position);
+
+			//apliquem matriu
+			cubeModelMatrix = cubeTranslationMatrix * cubeModelMatrix;
+
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "transform"), 1, GL_FALSE, glm::value_ptr(cubeModelMatrix));
 			//Definimos que queremos dibujar
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 14);
 
 			//Dejamos de usar el VAO indicado anteriormente
 			glBindVertexArray(0);
