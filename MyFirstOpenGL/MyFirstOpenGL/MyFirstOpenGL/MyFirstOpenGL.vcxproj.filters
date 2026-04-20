@@ -13,17 +13,17 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Shader">
-      <UniqueIdentifier>{e40f0fb8-9f86-439a-a69c-a7cf2a2358d3}</UniqueIdentifier>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{4f302101-be6b-4f9b-a436-c2be9b70bb27}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shader\Geometry Shader">
-      <UniqueIdentifier>{113404a3-cb31-412b-9545-e70190ee9099}</UniqueIdentifier>
+    <Filter Include="Shaders\Vertex Shader">
+      <UniqueIdentifier>{d7256d1e-2c72-4725-952c-5dbbbaf14bbb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shader\Vertex Shader">
-      <UniqueIdentifier>{d55e7fe7-fc7b-42f1-9a0e-2620f699f74a}</UniqueIdentifier>
+    <Filter Include="Shaders\Geometry Shader">
+      <UniqueIdentifier>{fb7877f1-c595-49b9-a39a-e389d73ce8d6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shader\Fragment Shader">
-      <UniqueIdentifier>{38692f1e-4ab5-4a7e-bbb9-cd1c152b08bf}</UniqueIdentifier>
+    <Filter Include="Shaders\Fragment Shader">
+      <UniqueIdentifier>{5f1c4ea7-c1fa-44f1-8b20-6040b498b897}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -33,13 +33,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="MyFirstVertexShader.glsl">
-      <Filter>Shader\Vertex Shader</Filter>
+      <Filter>Shaders\Vertex Shader</Filter>
     </None>
     <None Include="MyFirstGeometryShader.glsl">
-      <Filter>Shader\Geometry Shader</Filter>
+      <Filter>Shaders\Geometry Shader</Filter>
     </None>
     <None Include="MyFirstFragmentShader.glsl">
-      <Filter>Shader\Fragment Shader</Filter>
+      <Filter>Shaders\Fragment Shader</Filter>
     </None>
   </ItemGroup>
 </Project>

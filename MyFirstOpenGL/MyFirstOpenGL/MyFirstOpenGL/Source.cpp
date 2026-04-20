@@ -1,9 +1,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
-#include <iostream>
 #include <gtc/type_ptr.hpp>
 #include <gtc/matrix_transform.hpp>
+#include <iostream>
 #include <string>
 #include <fstream>
 #include <vector>
@@ -13,36 +13,47 @@
 
 std::vector<GLuint> compiledPrograms;
 
+//Struct para controlar el GameObject (cubo)
+struct GameObject {
+
+	glm::vec3 position = glm::vec3(0.f);
+	glm::vec3 rotation = glm::vec3(0.f);
+	glm::vec3 scale = glm::vec3(1.f);
+};
+
 struct ShaderProgram {
 
 	GLuint vertexShader = 0;
 	GLuint geometryShader = 0;
 	GLuint fragmentShader = 0;
 };
-struct GameObject {
-	glm::vec3 position = glm::vec3(0.f);
-	glm::vec3 rotation = glm::vec3(0.f);
-	glm::vec3 forward = glm::vec3(1.f, 0.f, 0.f);
-	float velocity = 0.01f;
-};
+
 void Resize_Window(GLFWwindow* window, int iFrameBufferWidth, int iFrameBufferHeight) {
 
 	//Definir nuevo tamaño del viewport
 	glViewport(0, 0, iFrameBufferWidth, iFrameBufferHeight);
-
 	glUniform2f(glGetUniformLocation(compiledPrograms[0], "windowSize"), iFrameBufferWidth, iFrameBufferHeight);
-
+	
 }
-glm::mat4 GenerateRotationMatrix(glm::vec3 axis, float fDegrees)
-{
+
+//Funcion que genera una matriz de escalado representada por un vector
+glm::mat4 GenerateScaleMatrix(glm::vec3 scaleAxis) {
+
+	return glm::scale(glm::mat4(1.0f), scaleAxis);
+}
+
+//Funcion que genera una matriz de rotacion dado un angulo y un vector
+glm::mat4 GenerateRotationMatrix(glm::vec3 axis, float fDegrees) {
+
 	return glm::rotate(glm::mat4(1.0f), glm::radians(fDegrees), glm::normalize(axis));
 }
-//Funcion que genera una matriz de Translacion representada por un vector
-glm::mat4 GenerateTranslationMatrix(glm::vec3 translation)
-{
-	return glm::translate(glm::mat4(1.0f), translation);
 
+//Funcion que genera una matriz de traslacion representada por un vector
+glm::mat4 GenerateTranslationMatrix(glm::vec3 translation) {
+
+	return glm::translate(glm::mat4(1.0f), translation);
 }
+
 //Funcion que devolvera una string con todo el archivo leido
 std::string Load_File(const std::string& filePath) {
 
@@ -50,7 +61,7 @@ std::string Load_File(const std::string& filePath) {
 
 	std::string fileContent;
 	std::string line;
-
+	
 	//Lanzamos error si el archivo no se ha podido abrir
 	if (!file.is_open()) {
 		std::cerr << "No se ha podido abrir el archivo: " << filePath << std::endl;
@@ -73,7 +84,7 @@ GLuint LoadFragmentShader(const std::string& filePath) {
 	// Crear un fragment shader
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-	//Usamos la funcion creada para leer el fragment shader y almacenarlo
+	//Usamos la funcion creada para leer el fragment shader y almacenarlo 
 	std::string sShaderCode = Load_File(filePath);
 	const char* cShaderSource = sShaderCode.c_str();
 
@@ -115,7 +126,7 @@ GLuint LoadGeometryShader(const std::string& filePath) {
 	// Crear un vertex shader
 	GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
 
-	//Usamos la funcion creada para leer el vertex shader y almacenarlo
+	//Usamos la funcion creada para leer el vertex shader y almacenarlo 
 	std::string sShaderCode = Load_File(filePath);
 	const char* cShaderSource = sShaderCode.c_str();
 
@@ -156,7 +167,7 @@ GLuint LoadVertexShader(const std::string& filePath) {
 	// Crear un vertex shader
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
-	//Usamos la funcion creada para leer el vertex shader y almacenarlo
+	//Usamos la funcion creada para leer el vertex shader y almacenarlo 
 	std::string sShaderCode = Load_File(filePath);
 	const char* cShaderSource = sShaderCode.c_str();
 
@@ -175,8 +186,7 @@ GLuint LoadVertexShader(const std::string& filePath) {
 
 		return vertexShader;
 
-	}
-	else {
+	}else {
 
 		//Obtenemos longitud del log
 		GLint logLength;
@@ -253,7 +263,7 @@ GLuint CreateProgram(const ShaderProgram& shaders) {
 	}
 }
 
-void main() {
+void main(){
 
 	//Definir semillas del rand según el tiempo
 	srand(static_cast<unsigned int>(time(NULL)));
@@ -283,15 +293,14 @@ void main() {
 	glEnable(GL_CULL_FACE);
 
 	//Indicamos lado del culling
-	glCullFace(GL_BACK);
+	glCullFace(GL_BACK);	
 
 	//Inicializamos GLEW y controlamos errores
 	if (glewInit() == GLEW_OK) {
 
-		//Declarar vec2 para definir el offset
-		glm::vec2 offset = glm::vec2(0.f, 0.f);
-		//instancia gameObject
-		GameObject cubo;
+		//Declarar instancia de GameObject
+		GameObject cube;
+
 		//Compilar shaders
 		ShaderProgram myFirstProgram;
 		myFirstProgram.vertexShader = LoadVertexShader("MyFirstVertexShader.glsl");
@@ -306,7 +315,7 @@ void main() {
 
 		GLuint vaoPuntos, vboPuntos;
 
-		//Definimos cantidad de vao a crear y donde almacenarlos
+		//Definimos cantidad de vao a crear y donde almacenarlos 
 		glGenVertexArrays(1, &vaoPuntos);
 
 		//Indico que el VAO activo de la GPU es el que acabo de crear
@@ -316,28 +325,24 @@ void main() {
 		glGenBuffers(1, &vboPuntos);
 
 		//Indico que el VBO activo es el que acabo de crear y que almacenará un array. Todos los VBO que genere se asignaran al último VAO que he hecho glBindVertexArray
-		glBindBuffer(GL_ARRAY_BUFFER, vboPuntos);
+		glBindBuffer(GL_ARRAY_BUFFER, vboPuntos);		
 
 		//Posición X e Y del punto
 		GLfloat punto[] = {
-			  -0.5f,0.5f,-0.5f,
-			  0.5f,0.5f,-0.5f,
-			  -0.5f,-0.5f,-0.5f,
-			  0.5f,-0.5f,-0.5f,
-			  0.5f,-0.5f,0.5f,
-			  0.5f,0.5f,-0.5f,
-			  0.5f,0.5f,0.5f,
-			  -0.5f,0.5f,-0.5f,
-			  -0.5f,0.5f,0.5f,
-			  -0.5f,-0.5f,-0.5f,
-			  -0.5f,-0.5f,0.5f,
-			  0.5f,-0.5f,0.5f,
-			  -0.5f,0.5f,0.5f,
-			  0.5f,0.5f,0.5f,
-
-
-
-
+			-0.5f, +0.5f, -0.5f, // 3
+			+0.5f, +0.5f, -0.5f, // 2
+			-0.5f, -0.5f, -0.5f, // 6
+			+0.5f, -0.5f, -0.5f, // 7
+			+0.5f, -0.5f, +0.5f, // 4
+			+0.5f, +0.5f, -0.5f, // 2
+			+0.5f, +0.5f, +0.5f, // 0
+			-0.5f, +0.5f, -0.5f, // 3
+			-0.5f, +0.5f, +0.5f, // 1
+			-0.5f, -0.5f, -0.5f, // 6
+			-0.5f, -0.5f, +0.5f, // 5
+			+0.5f, -0.5f, +0.5f, // 4
+			-0.5f, +0.5f, +0.5f, // 1
+			+0.5f, +0.5f, +0.5f  // 0
 		};
 
 		//Definimos modo de dibujo para cada cara
@@ -358,19 +363,24 @@ void main() {
 		//Desvinculamos VAO
 		glBindVertexArray(0);
 
-		
-
 		//Indicar a la tarjeta GPU que programa debe usar
 		glUseProgram(compiledPrograms[0]);
-		glm::mat4 modelMatrix = glm::mat4(1.f);
 
 		//Asignar valores iniciales al programa
 		glUniform2f(glGetUniformLocation(compiledPrograms[0], "windowSize"), WINDOW_WIDTH, WINDOW_HEIGHT);
+
 		//Generamos el game loop
 		while (!glfwWindowShouldClose(window)) {
 
 			//Pulleamos los eventos (botones, teclas, mouse...)
 			glfwPollEvents();
+			cube.position = glm::vec3(0.5f, 0.5f, 0.f);
+			cube.rotation = glm::vec3(0.f, 45.f, 0.f);
+			cube.scale = glm::vec3(0.7f, 0.7f, 0.7f);
+			//genero transoformaciones matrix
+			glm::mat4 translationMatrix = GenerateTranslationMatrix(cube.position);
+			glm::mat4 rotationMatrix = GenerateRotationMatrix(cube.rotation, cube.rotation.y);
+			glm::mat4 scaleMatrix = GenerateScaleMatrix(cube.scale);
 
 			//Limpiamos los buffers
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -378,23 +388,9 @@ void main() {
 			//Definimos que queremos usar el VAO con los puntos
 			glBindVertexArray(vaoPuntos);
 
-			glm::mat4 cubeModelMatrix = glm::mat4(1.f);
-			//calculem nova pos del cub
-			cubo.position = cubo.position + cubo.forward * cubo.velocity;
-			//invertim direcció del cub
-			if (cubo.position.x >= 0.5f || cubo.position.x <= -0.5f) {
-				cubo.forward = cubo.forward * -10.f;
-			}
-			//genero translation matrix a partir de la posició del cub
-			glm::mat4 cubeTranslationMatrix = GenerateTranslationMatrix(cubo.position);
-
-			//apliquem matriu
-			cubeModelMatrix = cubeTranslationMatrix * cubeModelMatrix;
-
-			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "transform"), 1, GL_FALSE, glm::value_ptr(cubeModelMatrix));
 			//Definimos que queremos dibujar
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 14);
-
+			
 			//Dejamos de usar el VAO indicado anteriormente
 			glBindVertexArray(0);
 
@@ -407,8 +403,7 @@ void main() {
 		glUseProgram(0);
 		glDeleteProgram(compiledPrograms[0]);
 
-	}
-	else {
+	}else {
 		std::cout << "Ha petao." << std::endl;
 		glfwTerminate();
 	}
