@@ -20,6 +20,15 @@ struct GameObject {
 	glm::vec3 rotation = glm::vec3(0.f);
 	glm::vec3 scale = glm::vec3(1.f);
 };
+struct Camera
+{
+	glm::vec3 position = glm::vec3(0.5f, 0.5f, 1.f);
+	glm::vec3 localVectorUp = glm::vec3(0.f, 0.1f, 0.0f);
+
+	float fFov = 45.f;
+	float fNear = 0.1f;
+	float fFar = 10.f;
+};
 
 struct ShaderProgram {
 
@@ -33,7 +42,7 @@ void Resize_Window(GLFWwindow* window, int iFrameBufferWidth, int iFrameBufferHe
 	//Definir nuevo tamaño del viewport
 	glViewport(0, 0, iFrameBufferWidth, iFrameBufferHeight);
 	glUniform2f(glGetUniformLocation(compiledPrograms[0], "windowSize"), iFrameBufferWidth, iFrameBufferHeight);
-	
+
 }
 
 //Funcion que genera una matriz de escalado representada por un vector
@@ -61,7 +70,7 @@ std::string Load_File(const std::string& filePath) {
 
 	std::string fileContent;
 	std::string line;
-	
+
 	//Lanzamos error si el archivo no se ha podido abrir
 	if (!file.is_open()) {
 		std::cerr << "No se ha podido abrir el archivo: " << filePath << std::endl;
@@ -84,7 +93,7 @@ GLuint LoadFragmentShader(const std::string& filePath) {
 	// Crear un fragment shader
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-	//Usamos la funcion creada para leer el fragment shader y almacenarlo 
+	//Usamos la funcion creada para leer el fragment shader y almacenarlo
 	std::string sShaderCode = Load_File(filePath);
 	const char* cShaderSource = sShaderCode.c_str();
 
@@ -126,7 +135,7 @@ GLuint LoadGeometryShader(const std::string& filePath) {
 	// Crear un vertex shader
 	GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
 
-	//Usamos la funcion creada para leer el vertex shader y almacenarlo 
+	//Usamos la funcion creada para leer el vertex shader y almacenarlo
 	std::string sShaderCode = Load_File(filePath);
 	const char* cShaderSource = sShaderCode.c_str();
 
@@ -167,7 +176,7 @@ GLuint LoadVertexShader(const std::string& filePath) {
 	// Crear un vertex shader
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
-	//Usamos la funcion creada para leer el vertex shader y almacenarlo 
+	//Usamos la funcion creada para leer el vertex shader y almacenarlo
 	std::string sShaderCode = Load_File(filePath);
 	const char* cShaderSource = sShaderCode.c_str();
 
@@ -186,7 +195,8 @@ GLuint LoadVertexShader(const std::string& filePath) {
 
 		return vertexShader;
 
-	}else {
+	}
+	else {
 
 		//Obtenemos longitud del log
 		GLint logLength;
@@ -263,7 +273,7 @@ GLuint CreateProgram(const ShaderProgram& shaders) {
 	}
 }
 
-void main(){
+void main() {
 
 	//Definir semillas del rand según el tiempo
 	srand(static_cast<unsigned int>(time(NULL)));
@@ -293,19 +303,22 @@ void main(){
 	glEnable(GL_CULL_FACE);
 
 	//Indicamos lado del culling
-	glCullFace(GL_BACK);	
+	glCullFace(GL_BACK);
 
 	//Inicializamos GLEW y controlamos errores
 	if (glewInit() == GLEW_OK) {
 
 		//Declarar instancia de GameObject
 		GameObject cube;
+		Camera camera;
 
 		//Compilar shaders
 		ShaderProgram myFirstProgram;
 		myFirstProgram.vertexShader = LoadVertexShader("MyFirstVertexShader.glsl");
 		myFirstProgram.geometryShader = LoadGeometryShader("MyFirstGeometryShader.glsl");
 		myFirstProgram.fragmentShader = LoadFragmentShader("MyFirstFragmentShader.glsl");
+
+
 
 		//Compilar programa
 		compiledPrograms.push_back(CreateProgram(myFirstProgram));
@@ -315,7 +328,7 @@ void main(){
 
 		GLuint vaoPuntos, vboPuntos;
 
-		//Definimos cantidad de vao a crear y donde almacenarlos 
+		//Definimos cantidad de vao a crear y donde almacenarlos
 		glGenVertexArrays(1, &vaoPuntos);
 
 		//Indico que el VAO activo de la GPU es el que acabo de crear
@@ -325,24 +338,24 @@ void main(){
 		glGenBuffers(1, &vboPuntos);
 
 		//Indico que el VBO activo es el que acabo de crear y que almacenará un array. Todos los VBO que genere se asignaran al último VAO que he hecho glBindVertexArray
-		glBindBuffer(GL_ARRAY_BUFFER, vboPuntos);		
+		glBindBuffer(GL_ARRAY_BUFFER, vboPuntos);
 
 		//Posición X e Y del punto
 		GLfloat punto[] = {
-			-0.5f, +0.5f, -0.5f, // 3
-			+0.5f, +0.5f, -0.5f, // 2
-			-0.5f, -0.5f, -0.5f, // 6
-			+0.5f, -0.5f, -0.5f, // 7
-			+0.5f, -0.5f, +0.5f, // 4
-			+0.5f, +0.5f, -0.5f, // 2
-			+0.5f, +0.5f, +0.5f, // 0
-			-0.5f, +0.5f, -0.5f, // 3
-			-0.5f, +0.5f, +0.5f, // 1
-			-0.5f, -0.5f, -0.5f, // 6
-			-0.5f, -0.5f, +0.5f, // 5
-			+0.5f, -0.5f, +0.5f, // 4
-			-0.5f, +0.5f, +0.5f, // 1
-			+0.5f, +0.5f, +0.5f  // 0
+			  -0.5f, +0.5f, -0.5f, // 3
+			  +0.5f, +0.5f, -0.5f, // 2
+			  -0.5f, -0.5f, -0.5f, // 6
+			  +0.5f, -0.5f, -0.5f, // 7
+			  +0.5f, -0.5f, +0.5f, // 4
+			  +0.5f, +0.5f, -0.5f, // 2
+			  +0.5f, +0.5f, +0.5f, // 0
+			  -0.5f, +0.5f, -0.5f, // 3
+			  -0.5f, +0.5f, +0.5f, // 1
+			  -0.5f, -0.5f, -0.5f, // 6
+			  -0.5f, -0.5f, +0.5f, // 5
+			  +0.5f, -0.5f, +0.5f, // 4
+			  -0.5f, +0.5f, +0.5f, // 1
+			  +0.5f, +0.5f, +0.5f  // 0
 		};
 
 		//Definimos modo de dibujo para cada cara
@@ -374,13 +387,47 @@ void main(){
 
 			//Pulleamos los eventos (botones, teclas, mouse...)
 			glfwPollEvents();
+
+
+			if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			{
+				camera.position.y += 0.01f;
+
+			}
+			if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			{
+				camera.position.y -= 0.01f;
+
+			}
+			if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			{
+				camera.position.x -= 0.01f;
+
+			}
+			if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			{
+				camera.position.x += 0.01f;
+
+			}
 			cube.position = glm::vec3(0.5f, 0.5f, 0.f);
 			cube.rotation = glm::vec3(0.f, 45.f, 0.f);
 			cube.scale = glm::vec3(0.7f, 0.7f, 0.7f);
-			//genero transoformaciones matrix
+
 			glm::mat4 translationMatrix = GenerateTranslationMatrix(cube.position);
 			glm::mat4 rotationMatrix = GenerateRotationMatrix(cube.rotation, cube.rotation.y);
 			glm::mat4 scaleMatrix = GenerateScaleMatrix(cube.scale);
+
+			//Genero matrices de transformacion
+
+			glm::mat4 viewMatrix = glm::lookAt(camera.position, camera.position + glm::vec3(0.f, 0.f, -1.f), camera.localVectorUp);
+
+			glm::mat4 projectionMatrix = glm::perspective(glm::radians(camera.fFov), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, camera.fNear, camera.fFar);
+			//Pasamos las variables al shader
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(translationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(rotationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(scaleMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
 			//Limpiamos los buffers
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -390,7 +437,7 @@ void main(){
 
 			//Definimos que queremos dibujar
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 14);
-			
+
 			//Dejamos de usar el VAO indicado anteriormente
 			glBindVertexArray(0);
 
@@ -403,7 +450,8 @@ void main(){
 		glUseProgram(0);
 		glDeleteProgram(compiledPrograms[0]);
 
-	}else {
+	}
+	else {
 		std::cout << "Ha petao." << std::endl;
 		glfwTerminate();
 	}
