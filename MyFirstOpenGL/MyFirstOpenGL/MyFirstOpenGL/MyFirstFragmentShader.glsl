@@ -6,6 +6,6 @@ out vec4 fragColor;
 
 void main() {
 
-        fragColor = vec4(1.0, 1.0, 1.0, 1.0);    
-
+    // Color taronja-groc, com una noria de fira il.luminada de nit
+    fragColor = vec4(1.0, 0.75, 0.2, 1.0);
 }

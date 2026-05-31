@@ -1,10 +1,12 @@
 #version 440 core
 
-layout (triangles) in;
-layout (triangle_strip, max_vertices = 3) out;
+// Acceptem linies (perque dibuixem la noria amb GL_LINES)
+layout (lines) in;
+layout (line_strip, max_vertices = 2) out;
 
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
+
 void main(){
 
 	for(int i = 0; i < gl_in.length(); i++){
